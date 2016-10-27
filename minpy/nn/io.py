@@ -4,7 +4,8 @@ from __future__ import absolute_import
 from collections import OrderedDict
 
 import sys, inspect
-import numpy as np
+import minpy.numpy as np
+import numpy as ori_np
 import six.moves.cPickle as pickle
 import minpy
 import mxnet.io
@@ -168,7 +169,7 @@ class NDArrayIter(DataIter):
 
         # shuffle data
         if shuffle:
-            idx = np.arange(self.data[0][1].shape[0])
+            idx = ori_np.arange(self.data[0][1].shape[0])
             np.random.shuffle(idx)
             self.data = [(k, v[idx]) for k, v in self.data]
             self.label = [(k, v[idx]) for k, v in self.label]
@@ -249,9 +250,9 @@ class NDArrayIter(DataIter):
         else:
             pad = self.batch_size - self.num_data + self.cursor
             if isinstance(data_source[0][1], minpy.array.Array):
-                return [minpy.array.Array(np.concatenate((x[1][self.cursor:].asnumpy(), x[1][:pad].asnumpy()), axis=0)) for x in data_source]
+                return [minpy.array.Array(ori_np.concatenate((x[1][self.cursor:].asnumpy(), x[1][:pad].asnumpy()), axis=0)) for x in data_source]
             elif isinstance(data_source[0][1], np.ndarray):
-                return [minpy.array.Array(np.concatenate((x[1][self.cursor:], x[1][:pad]), axis=0)) for x in data_source]
+                return [minpy.array.Array(ori_np.concatenate((x[1][self.cursor:], x[1][:pad]), axis=0)) for x in data_source]
             else:
                 raise TypeError("Invalid data type, only numpy.ndarray and minpy.array.Array are allowed.")
 
@@ -271,7 +272,7 @@ class NDArrayIter(DataIter):
 
     def getsubiter(self, num_samples):
         """Create a sub dataiter which samples part of the data in the dataset"""
-        idx = np.arange(self.data[0][1].shape[0])
+        idx = ori_np.arange(self.data[0][1].shape[0])
         np.random.shuffle(idx)
         mask = idx[0:num_samples]
         data = [v[mask] for k, v in self.data]
