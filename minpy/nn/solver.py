@@ -221,7 +221,7 @@ class Solver(object):
                 each_batch.data[0], mode='test').asnumpy()
             acc_count += np.sum(
                 np.argmax(
-                    predict, axis=1) == each_batch.label[0])
+                    predict, axis=1) == each_batch.label[0].asnumpy())
             num_samples += check_dataiter.batch_size
         return float(acc_count) / num_samples
 
