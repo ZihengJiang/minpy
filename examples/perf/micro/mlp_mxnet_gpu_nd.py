@@ -33,7 +33,7 @@ def backward(g, activations, weights, biases):
     bias_deltas = []
     for weight, activation in reversed(list(zip(weights, activations))):
         bias_deltas.append(mx.nd.sum(g, axis=0, keepdims=True))
-        weight_deltas.append(activation.T.dot(g))
+        weight_deltas.append(mx.nd.dot(activation.T, g))
         g = mx.nd.dot(g, weight.T)
         g = g * (activation > 1e-4)
     return list(reversed(bias_deltas)), list(reversed(weight_deltas))
@@ -41,7 +41,7 @@ def backward(g, activations, weights, biases):
 
 def softmax(activation, one_hot):
     n = activation.shape[0]
-    probs = activation - mx.nd.amax(activation, axis=1, keepdims=True)
+    probs = activation - mx.nd.max(activation, axis=1, keepdims=True)
     loss = -mx.nd.sum(probs * one_hot - mx.nd.log(
         mx.nd.sum(mx.nd.exp(probs), axis=1, keepdims=True))) / n
     return loss
@@ -65,7 +65,7 @@ def softmax_loss_gradient(activation, one_hot):
         g = g * (1 - (mx.nd.broadcast_to(m, activation.shape) == activation))
         return g
     else:
-        probs = activation - mx.nd.amax(activation, axis=1, keepdims=True)
+        probs = activation - mx.nd.max(activation, axis=1, keepdims=True)
         e = mx.nd.exp(probs)
         p = e / mx.nd.sum(e, axis=1, keepdims=True)
         q = p - one_hot
@@ -85,7 +85,8 @@ def main(args):
             activation.wait_to_read()
             continue
         num_samples = activation.shape[0]
-        label_one_hot = mx.nd.onehot_encode(label)
+        label_one_hot = mx.nd.zeros(activation.shape, ctx=mx.gpu(0))
+        mx.nd.onehot_encode(label, label_one_hot)
         g = softmax_loss_gradient(activation, label_one_hot)
         bias_deltas, weight_deltas = backward(g, f, weights, biases)
         for b_delta in bias_deltas:

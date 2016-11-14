@@ -15,8 +15,8 @@ from minpy.utils.minprof import minprof
 from minpy.context import set_context, gpu
 set_context(gpu(0)) # set the global context as gpu(0)
 
-import logging
-logging.getLogger('minpy.array').setLevel(logging.DEBUG)
+#import logging
+#logging.getLogger('minpy.array').setLevel(logging.DEBUG)
 #logging.getLogger('minpy.core').setLevel(logging.DEBUG)
 #logging.getLogger('minpy.primitive').setLevel(logging.DEBUG)
 #logging.getLogger('minpy.dispatch.policy').setLevel(logging.DEBUG)
