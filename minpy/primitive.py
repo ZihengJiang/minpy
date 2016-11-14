@@ -159,11 +159,9 @@ class Primitive(object):
 
             def context_wrapper(func):
                 """A context wrapper only for gradient function.
-
-                Note: no need to use functools.wraps to get old function
-                signature.
                 """
 
+                @functools.wraps(func)
                 def wrapped(result):
                     with get_context(result).as_mxnet_context():
                         return func(result)
@@ -172,13 +170,15 @@ class Primitive(object):
 
             def raw_value_wrapper(func):
                 """Unwrap Value for gradient function.
-
-                Note: no need to use functools.wraps to get old function
-                signature.
                 """
 
+                @functools.wraps(func)
                 def wrapped(result):
-                    return func(result.get_data(self.type))
+                    if isinstance(result, (tuple, list)):
+                        result = (elm.get_data(self.type) for elm in result)
+                    else:
+                        result = result.get_data(self.type)
+                    return func(result)
 
                 return wrapped
 
