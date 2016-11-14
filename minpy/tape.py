@@ -20,7 +20,7 @@ _logger = log.get_logger(__name__)
 # pylint: enable=invalid-name
 
 GradRecord = collections.namedtuple(
-    'GradRecord', ['grad_func', 'result', 'primitive_type', 'owner'])
+    'GradRecord', ['grad_func', 'result', 'owner'])
 
 
 class Tape(object):
@@ -35,7 +35,7 @@ class Tape(object):
         self._array_grad_records = collections.defaultdict(list)
         self.__class__.timestamp += 1
 
-    def add_partial_derivative(self, grad_func, owner, result, primitive_type):
+    def add_partial_derivative(self, grad_func, owner, result):
         """Add partial derivative.
 
         Parameters
@@ -46,15 +46,12 @@ class Tape(object):
             Owners of the gradient. Usually it is just one array. But a list is also allowed.
         result
             Result of previous forward execution.
-        primitive_type
-            Primitive type indicating location of execution.
         """
         if isinstance(owner, array.Value):
             self._array_grad_records[owner].append(
                 GradRecord(
                     grad_func=grad_func,
                     result=result,
-                    primitive_type=primitive_type,
                     owner=owner))
         elif owner is not None:
             # None means a placeholder for an array that needs no gradient.
@@ -129,33 +126,11 @@ class Tape(object):
                 # Initialize if necessary.
                 grad_records = self._array_grad_records[current_array]
 
-                def get_result_grad(result, primitive_type):
-                    """Get gradient of result."""
-                    if isinstance(result, array.Value):
-                        return self._grads[result].get_data(primitive_type)
-                    else:
-                        return tuple(get_result_grad(sub_result, primitive_type)
-                                     for sub_result in result)
-
-                def get_context(result):
-                    """Get context of result."""
-                    if isinstance(result, array.Value):
-                        return result.context
-                    else:
-                        return get_context(result[0])
-
                 for grad_record in grad_records:
-                    result_grad_value = get_result_grad(
-                        grad_record.result, grad_record.primitive_type)
+	            # TODO: add primitive_type info in debug info later.
                     _logger.debug(
-                        'Calling derivative func "{}" with type "{}".'.format(
-                            grad_record.grad_func, grad_record.primitive_type))
-                    if grad_record.primitive_type == array_variants.ArrayType.MXNET:
-                        with get_context(grad_record.result).as_mxnet_context(
-                        ):
-                            grad = grad_record.grad_func(result_grad_value)
-                    else:
-                        grad = grad_record.grad_func(result_grad_value)
+                        'Calling derivative func "{}"'.format(grad_record.grad_func))
+                    grad = grad_record.grad_func(self._grads[grad_record.result])
                     self._cumulate_gradient(grad_record.owner, grad)
 
                 def remove_grad_record(owner, grad_record):
