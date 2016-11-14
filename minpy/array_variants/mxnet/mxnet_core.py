@@ -96,10 +96,13 @@ def def_grads(reg, prims):
     prims('true_divide').def_grad(
         lambda ans, x, y: _unbroadcast(ans, y, lambda g: -g * x / (y * y)),
         argnum=1)
-    # mod
-    #prims.mod.def_grad(lambda ans, x, y : _unbroadcast(ans, x, identity))
-    #prims.mod.def_grad(
-    #lambda ans, x, y : _unbroadcast(ans, y, lambda g : - g * ndarray.floor(x/y)), argnum=1)
+    prims('maximum').def_grad(
+        lambda ans, x, y: _unbroadcast(ans, x, lambda g: g * (x == ans)))
+    prims('maximum').def_grad(
+        lambda ans, x, y: _unbroadcast(ans, y, lambda g: g * (y == ans)),
+        argnum=1)
+    # TODO: minjie
+    prims('max').def_grad_zero()
     # negate
     prims('negative').def_grad(lambda ans, x: operator.neg)
     prims('transpose').def_grad(lambda ans, x: mxnet.nd.transpose)
