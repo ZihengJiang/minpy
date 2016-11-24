@@ -35,7 +35,7 @@ class Value(object):
 
     def __init__(self, context):
         self._bp_timestamp = -1
-        self._minpy_value_id = self._ids.next()
+        self._minpy_value_id = next(self._ids)
         if context is None:
             self._context = current_context()
         else:
