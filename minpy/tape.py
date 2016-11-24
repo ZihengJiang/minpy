@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=logging-format-interpolation
 """Tape for recording gradient calculation."""
 from __future__ import absolute_import
 from __future__ import print_function
@@ -9,10 +8,8 @@ import contextlib
 import collections
 
 import numpy
-import mxnet
 
 from . import array
-from . import array_variants
 from .utils import log
 
 # pylint: disable=invalid-name
@@ -30,7 +27,7 @@ class Tape(object):
 
     def __init__(self):
         # Stores grad value result from target back to [KEY]. Array -> grad result (Array)
-        self._grads = collections.defaultdict(lambda : array.wrap(0.0))
+        self._grads = collections.defaultdict(lambda: array.wrap(0.0))
         # Store derivation graph of gradients. Array -> list of grad records (or record tuples)
         self._array_grad_records = collections.defaultdict(list)
         self.__class__.timestamp += 1
@@ -56,12 +53,12 @@ class Tape(object):
         elif owner is not None:
             # None means a placeholder for an array that needs no gradient.
             for sub_owner in owner:
-                self.add_partial_derivative(grad_func, sub_owner, result, primitive_type)
+                self.add_partial_derivative(grad_func, sub_owner, result)
 
     def set_gradient_target(self, target):
         """Set gradient targets to ones."""
 
-        """Set gradient target for one."""
+        # Set gradient target for one.
         if isinstance(target, array.Value):
             self._grads[target] = array.wrap(1.0 if isinstance(
                 target, array.Number) else numpy.ones(target.shape))
@@ -129,7 +126,7 @@ class Tape(object):
                 for grad_record in grad_records:
 	            # TODO: add primitive_type info in debug info later.
                     _logger.debug(
-                        'Calling derivative func "{}"'.format(grad_record.grad_func))
+                        'Calling derivative func "%s"', grad_record.grad_func)
                     grad = grad_record.grad_func(self._grads[grad_record.result])
                     self._cumulate_gradient(grad_record.owner, grad)
 
